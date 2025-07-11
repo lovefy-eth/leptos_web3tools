@@ -69,6 +69,9 @@ jobs:
 
       # Deploy with Github Static Pages
 
+      - name: Show dist structure
+        run: ls -l dist
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
         with:
@@ -84,4 +87,4 @@ jobs:
 
       - name: Deploy to GitHub Pages 🚀
         id: deployment
-        run: trunk serve
+        uses: actions/deploy-pages@v4
