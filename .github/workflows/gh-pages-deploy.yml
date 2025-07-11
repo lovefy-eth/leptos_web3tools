@@ -32,14 +32,19 @@ jobs:
         run: wget -qO- https://github.com/trunk-rs/trunk/releases/download/v0.18.4/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
 
       - name: Build with Trunk
-        run: ./trunk build --release --public-url "${GITHUB_REPOSITORY#*/}"
+        run: ./trunk build --release --public-url \"${GITHUB_REPOSITORY#*/}\"
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-pages
+          path: dist
 
       - name: Deploy to GitHub Pages 🚀
         id: deployment
         uses: actions/deploy-pages@v4
         with:
-          # 这里指定 trunk 的输出目录
-          folder: dist
+          artifact_name: github-pages
