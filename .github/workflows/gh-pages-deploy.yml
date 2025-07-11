@@ -29,10 +29,20 @@ jobs:
         run: rustup target add wasm32-unknown-unknown
 
       - name: Download and install Trunk binary
-        run: wget -qO- https://github.com/trunk-rs/trunk/releases/download/v0.18.4/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
+        run: wget -qO- https://github.com/trunk-rs/trunk/releases/download/v0.21.14/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
 
       - name: Build with Trunk
         run: ./trunk build --release --public-url \"${GITHUB_REPOSITORY#*/}\"
+
+      - name: Check for symlinks and hardlinks
+        run: |
+          echo "查找符号链接："
+          find dist -type l
+          echo "查找硬链接："
+          find dist -type f -links +1
+
+      - name: List all files in dist
+        run: find dist | sort
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
