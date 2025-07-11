@@ -1,60 +1,90 @@
-name: Deploy to GitHub Pages
+# For setup instructions needed for Fermyon Cloud, see:
+# https://developer.fermyon.com/cloud/github-actions
+
+# For reference, see:
+# https://developer.fermyon.com/cloud/changelog/gh-actions-spin-deploy
+
+# For the Fermyon gh actions themselves, see:
+# https://github.com/fermyon/actions
+
+name: Release to Spin Cloud
 
 on:
-  push:
+push:
     branches: [main]
-  workflow_dispatch:
+workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+contents: read
+id-token: write
 
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
-  group: "pages"
-  cancel-in-progress: false
+group: "spin"
+cancel-in-progress: false
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+Spin-Release:
 
-      - name: Install nightly Rust
+    timeout-minutes: 10
+
+    environment:
+    name: production
+    url: ${{ steps.deployment.outputs.app-url }}
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4 # repo checkout
+
+    # Install Rust Nightly Toolchain, with Clippy & Rustfmt
+    - name: Install nightly Rust
         uses: dtolnay/rust-toolchain@nightly
         with:
-          components: clippy, rustfmt
+        components: clippy, rustfmt
 
-      - name: Add WASM target
-        run: rustup target add wasm32-unknown-unknown
+    - name: Add WASM & WASI targets
+        run: rustup target add wasm32-unknown-unknown && rustup target add wasm32-wasi
 
-      - name: Download and install Trunk binary
-        run: wget -qO- https://github.com/trunk-rs/trunk/releases/download/v0.21.14/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
+    - name: lint
+        run: cargo clippy & cargo fmt
 
-      - name: Build with Trunk
-        run: ./trunk build --release --public-url \"${GITHUB_REPOSITORY#*/}\"
 
-      - name: Check for symlinks and hardlinks
-        run: |
-          echo "查找符号链接："
-          find dist -type l
-          echo "查找硬链接："
-          find dist -type f -links +1
+    # If using tailwind...
+    # - name: Download and install tailwindcss binary
+    #   run: npm install -D tailwindcss && npx tailwindcss -i  -o   # run tailwind
 
-      - name: List all files in dist
-        run: find dist | sort
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
+    - name: Download and install Trunk binary
+        run: wget -qO- https://github.com/trunk-rs/trunk/releases/download/v0.18.2/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: github-pages
-          path: dist
 
-      - name: Deploy to GitHub Pages 🚀
+    - name: Build with Trunk
+        run: ./trunk build --release
+
+
+    # Install Spin CLI & Deploy
+
+    - name: Setup Spin
+        uses: fermyon/actions/spin/setup@v1
+        # with:
+        # plugins:
+
+
+    - name: Build and deploy
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: fermyon/actions/spin/deploy@v1
         with:
-          artifact_name: github-pages
+        fermyon_token: ${{ secrets.FERMYON_CLOUD_TOKEN }}
+        # key_values: |-
+            # abc=xyz
+            # foo=bar
+        # variables: |-
+            # password=${{ secrets.SECURE_PASSWORD }}
+            # apikey=${{ secrets.API_KEY }}
+
+    # Create an explicit message to display the URL of the deployed app, as well as in the job graph
+    - name: Deployed URL
+        run: |
+        echo "Deployed app URL: ${{ steps.deployment.outputs.app-url }}" >> $GITHUB_STEP_SUMMARY
