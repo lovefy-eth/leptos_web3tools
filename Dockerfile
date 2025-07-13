@@ -29,14 +29,15 @@ RUN curl -L --output cargo-binstall.tgz https://github.com/cargo-bins/cargo-bins
 # 使用 cargo-binstall 安装 trunk 构建工具（指定版本 0.16.0）
 RUN cargo binstall trunk@0.16.0 -y
 
-# 设置工作目录为 /root
-WORKDIR /root
+# 设置工作目录为 /app
+WORKDIR /app
 
 # 将当前目录（构建上下文）的所有文件复制到容器内的当前工作目录
 COPY . . 
 
-# 暴露端口
+# 声明容器监听的端口（Railway 会自动设置 PORT 环境变量）
 EXPOSE $PORT
-# 启动 trunk 开发服务器
-CMD ["trunk", "serve"]
+
+# 启动 trunk 开发服务器，使用 Railway 提供的 PORT
+CMD ["sh", "-c", "trunk serve --address 0.0.0.0 --port $PORT"]
 
