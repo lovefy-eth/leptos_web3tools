@@ -4,10 +4,10 @@ FROM debian:bullseye
 # 安装常用的构建工具和依赖包
 RUN apt-get update && \
     apt-get install --no-install-recommends -y \
-    build-essential \                    # 编译工具链
-    autoconf automake autotools-dev libtool xutils-dev \  # 自动构建工具
-    ca-certificates curl file && \       # SSL证书、网络工具、文件类型检测
-    rm -rf /var/lib/apt/lists/*         # 清理apt缓存以减小镜像大小
+    build-essential \
+    autoconf automake autotools-dev libtool xutils-dev \
+    ca-certificates curl file && \
+    rm -rf /var/lib/apt/lists/*
 
 # 安装 Rust 工具链，包括 WASM 目标平台
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | \
@@ -19,9 +19,9 @@ ENV PATH=/root/.cargo/bin:$PATH
 # 安装 cargo-binstall 工具，用于快速安装 Rust 二进制包，减少镜像大小
 WORKDIR /root/.cargo/bin
 RUN curl -L --output cargo-binstall.tgz https://github.com/cargo-bins/cargo-binstall/releases/download/v0.19.3/cargo-binstall-x86_64-unknown-linux-gnu.tgz && \
-    tar -xvzf cargo-binstall.tgz && \   # 解压下载的文件
-    chmod +x cargo-binstall && \        # 给可执行文件添加执行权限
-    rm cargo-binstall.tgz               # 删除压缩包
+    tar -xvzf cargo-binstall.tgz && \
+    chmod +x cargo-binstall && \
+    rm cargo-binstall.tgz
 
 # 注释掉的可选组件安装（rust-analyzer、rustfmt、rust-src、clippy）
 #RUN rustup component add rust-analyzer rustfmt rust-src clippy
